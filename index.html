@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>PIXELBATTLE mini</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(145deg, #1a1e2c 0%, #2a2f42 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Roboto', system-ui, sans-serif;
+            padding: 16px;
+        }
+        .game-container {
+            background: #0b0e14;
+            border-radius: 36px;
+            padding: 24px 24px 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            max-width: 700px;
+            width: 100%;
+        }
+        h1 {
+            margin: 0 0 6px 0;
+            font-weight: 600;
+            font-size: 2rem;
+            letter-spacing: 2px;
+            text-align: center;
+            color: #f0e9e1;
+            text-shadow: 0 4px 8px #00000040;
+            word-break: break-word;
+        }
+        .subtitle {
+            text-align: center;
+            margin: 0 0 20px 0;
+            color: #a9b7d4;
+            font-weight: 400;
+            font-size: 1rem;
+            border-bottom: 1px solid #2f3a5c;
+            padding-bottom: 12px;
+        }
+        .pixel-grid {
+            display: grid;
+            grid-template-columns: repeat(30, 1fr);
+            background-color: #1e2433;
+            padding: 4px;
+            border-radius: 20px;
+            box-shadow: inset 0 6px 8px #00000055, 0 8px 12px #00000030;
+            margin-bottom: 20px;
+            aspect-ratio: 1 / 1;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .pixel {
+            aspect-ratio: 1 / 1;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 3px;
+            transition: background-color 0.1s ease;
+            box-shadow: inset 0 0 0 0.5px #5e6c8440;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .pixel:hover {
+            filter: brightness(1.05);
+            box-shadow: inset 0 0 0 1.5px #c0d0ff, 0 0 6px #7f9fff;
+            z-index: 2;
+        }
+        .info-panel {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            background: #151b26;
+            border-radius: 60px;
+            padding: 12px 20px;
+            margin: 6px 0 14px;
+            box-shadow: inset 0 2px 4px #000000, 0 4px 8px #00000030;
+        }
+        .cooldown-box {
+            background: #1e293b;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            color: #f2e9c2;
+            box-shadow: inset 0 1px 3px #00000080;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .timer-value {
+            background: #0f141c;
+            padding: 6px 14px;
+            border-radius: 32px;
+            font-family: monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #ffd966;
+            min-width: 75px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #1a2332;
+            padding: 5px 16px 5px 20px;
+            border-radius: 40px;
+        }
+        .color-picker-wrapper label {
+            color: #bdc9e6;
+            font-weight: 500;
+        }
+        input[type="color"] {
+            width: 56px;
+            height: 48px;
+            border: 2px solid #3d506e;
+            border-radius: 28px;
+            background: #0f1a24;
+            padding: 4px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px black;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 24px;
+        }
+        .status-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            color: #b0c2da;
+            font-size: 0.95rem;
+        }
+        .stats-badge {
+            background: #1d3d3a;
+            padding: 6px 16px;
+            border-radius: 40px;
+            color: #b3f0c3;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .stats-badge::before {
+            content: "🎨";
+            font-size: 1.2rem;
+        }
+        .error-message {
+            color: #ffa098;
+            background: #3e1e2c;
+            border-radius: 32px;
+            padding: 8px 18px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            max-width: 250px;
+        }
+        .footer-note {
+            color: #6a7d9e;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 14px;
+        }
+        .footer-note a {
+            color: #aec3ff;
+        }
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+        @media (max-width: 500px) {
+            .game-container { padding: 16px 12px 24px; }
+            .info-panel { flex-direction: column; gap: 12px; }
+            .timer-value { font-size: 1.5rem; }
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, onValue, set, serverTimestamp, increment, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        // Публичная конфигурация Firebase (замени на свою при необходимости)
+        const firebaseConfig = {
+  apiKey: "AIzaSyAU4opyTFmHt7LsSC2ue8y4S4T_rtWYBOo",
+  authDomain: "pixelbattle-a085d.firebaseapp.com",
+  databaseURL: "https://pixelbattle-a085d-default-rtdb.firebaseio.com",
+  projectId: "pixelbattle-a085d",
+  storageBucket: "pixelbattle-a085d.firebasestorage.app",
+  messagingSenderId: "704091500505",
+  appId: "1:704091500505:web:bbf90758b48b056cad73c8"
+};
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        const SIZE = 30;
+        const DEFAULT_COLOR = '#ffffff'; // белый фон
+        
+        let gridData = new Array(SIZE * SIZE).fill(DEFAULT_COLOR);
+        let nextPlaceAllowed = 0;
+        const cooldownSeconds = 10;
+        let selectedColor = '#FF5733';
+        let userId = 'user_' + Math.random().toString(36).substring(2, 10);
+        let isInitialLoad = true;
+        
+        const gridContainer = document.getElementById('pixelGrid');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const cooldownStatus = document.getElementById('cooldownStatus');
+        const colorPicker = document.getElementById('colorPicker');
+        const statusMessage = document.getElementById('statusMessage');
+        const totalPixelsSpan = document.getElementById('totalPixelsPlaced');
+        
+        // Ссылки на базу данных
+        const gridRef = ref(db, 'pixelGrid/30x30');
+        const statsRef = ref(db, 'stats/totalPixels');
+        
+        function buildGrid() {
+            gridContainer.innerHTML = '';
+            for (let i = 0; i < SIZE * SIZE; i++) {
+                const pixel = document.createElement('div');
+                pixel.className = 'pixel';
+                pixel.dataset.index = i;
+                pixel.style.backgroundColor = gridData[i];
+                pixel.addEventListener('click', (e) => handlePixelClick(e, i));
+                gridContainer.appendChild(pixel);
+            }
+        }
+        
+        function updatePixelUI(index, color) {
+            const pixels = gridContainer.children;
+            if (pixels[index]) {
+                pixels[index].style.backgroundColor = color;
+            }
+        }
+        
+        async function handlePixelClick(e, index) {
+            const now = Date.now();
+            if (now < nextPlaceAllowed) {
+                const waitSec = Math.ceil((nextPlaceAllowed - now) / 1000);
+                statusMessage.textContent = `⏳ Подожди ${waitSec} сек.`;
+                return;
+            }
+            
+            const color = selectedColor;
+            const cooldownUntil = now + cooldownSeconds * 1000;
+            nextPlaceAllowed = cooldownUntil;
+            updateTimerDisplay();
+            statusMessage.textContent = '🎨 Ставим твой пиксель в историю...';
+            
+            // Оптимистичное обновление UI
+            const oldColor = gridData[index];
+            gridData[index] = color;
+            updatePixelUI(index, color);
+            
+            try {
+                // Обновляем сетку
+                await set(gridRef, {
+                    pixels: gridData,
+                    lastUpdated: serverTimestamp(),
+                    lastUpdatedBy: userId
+                });
+                
+                // Увеличиваем счётчик пикселей (транзакция для надёжности)
+                await runTransaction(statsRef, (current) => {
+                    return (current || 0) + 1;
+                });
+                
+                statusMessage.textContent = '✅ Пиксель забабашен';
+            } catch (error) {
+                console.error('Ошибка записи:', error);
+                statusMessage.textContent = '❌ не получилось поставить пиксель.';
+                // Откат UI при ошибке
+                gridData[index] = oldColor;
+                updatePixelUI(index, oldColor);
+            }
+            
+            startCooldownInterval();
+        }
+        
+        let timerInterval = null;
+        function startCooldownInterval() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                updateTimerDisplay();
+            }, 200);
+        }
+        
+        function updateTimerDisplay() {
+            const now = Date.now();
+            const diff = nextPlaceAllowed - now;
+            if (diff <= 0) {
+                timerDisplay.textContent = '0.0';
+                cooldownStatus.textContent = 'ставь пиксель!';
+                cooldownStatus.style.color = '#b3f0c3';
+            } else {
+                const seconds = (diff / 1000).toFixed(1);
+                timerDisplay.textContent = seconds;
+                cooldownStatus.textContent = 'ща секу...';
+                cooldownStatus.style.color = '#ffb77c';
+            }
+        }
+        
+        function subscribeToGrid() {
+            onValue(gridRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data && data.pixels && Array.isArray(data.pixels) && data.pixels.length === SIZE*SIZE) {
+                    const newPixels = data.pixels;
+                    for (let i = 0; i < SIZE*SIZE; i++) {
+                        if (gridData[i] !== newPixels[i]) {
+                            gridData[i] = newPixels[i];
+                            updatePixelUI(i, newPixels[i]);
+                        }
+                    }
+                    isInitialLoad = false;
+                } else {
+                    // Если данных нет, инициализируем белым
+                    if (isInitialLoad) {
+                        const defaultPixels = new Array(SIZE*SIZE).fill(DEFAULT_COLOR);
+                        set(gridRef, { 
+                            pixels: defaultPixels, 
+                            lastUpdated: serverTimestamp(), 
+                            lastUpdatedBy: 'init' 
+                        });
+                        // Инициализируем счётчик если его нет
+                        set(statsRef, 0);
+                    }
+                }
+            }, (error) => {
+                console.error('Ошибка чтения:', error);
+                statusMessage.textContent = '⚠️ чел, сервер тебя не видит, чекни инет';
+            });
+            
+            // Подписка на счётчик пикселей
+            onValue(statsRef, (snapshot) => {
+                const count = snapshot.val() || 0;
+                totalPixelsSpan.textContent = count;
+            });
+        }
+        
+        window.addEventListener('load', () => {
+            buildGrid();
+            subscribeToGrid();
+            
+            colorPicker.addEventListener('input', (e) => {
+                selectedColor = e.target.value;
+            });
+            colorPicker.addEventListener('change', (e) => {
+                selectedColor = e.target.value;
+            });
+            selectedColor = colorPicker.value;
+            
+            startCooldownInterval();
+            updateTimerDisplay();
+        });
+    </script>
+</head>
+<body>
+<div class="game-container">
+    <h1>ПИКСЕЛЬ БАТЛ мини</h1>
+    <div class="subtitle">30x30 · 10 сек задержка · общее поле</div>
+
+    <div id="pixelGrid" class="pixel-grid"></div>
+
+    <div class="info-panel">
+        <div class="cooldown-box">
+            <span>⏱️</span>
+            <span id="cooldownStatus" style="min-width: 110px;">ща секу</span>
+            <span class="timer-value" id="timerDisplay">10.0</span>
+        </div>
+        <div class="color-picker-wrapper">
+            <label for="colorPicker">🎨</label>
+            <input type="color" id="colorPicker" value="#FF5733" title="выбери цвет">
+        </div>
+    </div>
+
+    <div class="status-area">
+        <div class="stats-badge">
+            <span>🎯 Всего пикселей: <span id="totalPixelsPlaced">0</span></span>
+        </div>
+    </div>
+    <div id="statusMessage" class="error-message" style="margin-top: 12px;">поле чистое как репутация новки</div>
+    <div class="footer-note">
+        пиксельбатл мини - мини история<br>
+        <span style="opacity:0.7">@batlukov в итд</span>
+    </div>
+</div>
+</body>
+</html>
