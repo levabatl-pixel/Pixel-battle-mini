@@ -193,7 +193,7 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, onValue, set, serverTimestamp, increment, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        import { getDatabase, ref, onValue, set, serverTimestamp, increment, runTransaction, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAU4opyTFmHt7LsSC2ue8y4S4T_rtWYBOo",
@@ -350,16 +350,30 @@
             });
         }
         
-        window.addEventListener('load', () => {
-            buildGrid();
-            subscribeToGrid();
-            
-            onValue(cooldownRef, (snapshot) => {
+        // Функция для получения значения кулдауна из базы
+        async function fetchCooldownFromDB() {
+            try {
+                const snapshot = await get(cooldownRef);
                 const val = snapshot.val();
                 if (val !== null && typeof val === 'number' && val > 0) {
                     cooldownSeconds = val;
                 }
-            });
+            } catch (error) {
+                console.error('Ошибка получения кулдауна:', error);
+            }
+        }
+        
+        window.addEventListener('load', () => {
+            buildGrid();
+            subscribeToGrid();
+            
+            // Первое получение значения
+            fetchCooldownFromDB();
+            
+            // Каждые 3 секунды проверяем новое значение
+            setInterval(() => {
+                fetchCooldownFromDB();
+            }, 3000);
             
             colorPicker.addEventListener('input', (e) => {
                 selectedColor = e.target.value;
