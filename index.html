@@ -209,7 +209,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
-        const SIZE = 30;
+        const SIZE = 60;
         const DEFAULT_COLOR = '#ffffff'; // белый фон
         
         let gridData = new Array(SIZE * SIZE).fill(DEFAULT_COLOR);
@@ -373,7 +373,7 @@
 <body>
 <div class="game-container">
     <h1>ПИКСЕЛЬ БАТЛ мини</h1>
-    <div class="subtitle">30x30 · 10 сек задержка · общее поле</div>
+    <div class="subtitle">30x60 · 10 сек задержка · общее поле</div>
 
     <div id="pixelGrid" class="pixel-grid"></div>
 
