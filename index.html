@@ -214,7 +214,7 @@
         
         let gridData = new Array(SIZE * SIZE).fill(DEFAULT_COLOR);
         let nextPlaceAllowed = 0;
-        const cooldownSeconds = 10000;
+        const cooldownSeconds = 10;
         let selectedColor = '#FF5733';
         let userId = 'user_' + Math.random().toString(36).substring(2, 10);
         let isInitialLoad = true;
@@ -372,7 +372,7 @@
 </head>
 <body>
 <div class="game-container">
-    <h1>ТЕХНИЧЕСКИЙ ПЕРЕРЫВ</h1>
+    <h1>ПИКСЕЛЬБАТЛ мини</h1>
     <div class="subtitle">30x60 · 10 сек задержка · общее поле</div>
 
     <div id="pixelGrid" class="pixel-grid"></div>
