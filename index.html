@@ -195,26 +195,25 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getDatabase, ref, onValue, set, serverTimestamp, increment, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // Публичная конфигурация Firebase (замени на свою при необходимости)
         const firebaseConfig = {
-  apiKey: "AIzaSyAU4opyTFmHt7LsSC2ue8y4S4T_rtWYBOo",
-  authDomain: "pixelbattle-a085d.firebaseapp.com",
-  databaseURL: "https://pixelbattle-a085d-default-rtdb.firebaseio.com",
-  projectId: "pixelbattle-a085d",
-  storageBucket: "pixelbattle-a085d.firebasestorage.app",
-  messagingSenderId: "704091500505",
-  appId: "1:704091500505:web:bbf90758b48b056cad73c8"
-};
+            apiKey: "AIzaSyAU4opyTFmHt7LsSC2ue8y4S4T_rtWYBOo",
+            authDomain: "pixelbattle-a085d.firebaseapp.com",
+            databaseURL: "https://pixelbattle-a085d-default-rtdb.firebaseio.com",
+            projectId: "pixelbattle-a085d",
+            storageBucket: "pixelbattle-a085d.firebasestorage.app",
+            messagingSenderId: "704091500505",
+            appId: "1:704091500505:web:bbf90758b48b056cad73c8"
+        };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
         const SIZE = 60;
-        const DEFAULT_COLOR = '#ffffff'; // белый фон
+        const DEFAULT_COLOR = '#ffffff';
         
         let gridData = new Array(SIZE * SIZE).fill(DEFAULT_COLOR);
         let nextPlaceAllowed = 0;
-        const cooldownSeconds = 10;
+        let cooldownSeconds = null;
         let selectedColor = '#FF5733';
         let userId = 'user_' + Math.random().toString(36).substring(2, 10);
         let isInitialLoad = true;
@@ -226,9 +225,9 @@
         const statusMessage = document.getElementById('statusMessage');
         const totalPixelsSpan = document.getElementById('totalPixelsPlaced');
         
-        // Ссылки на базу данных
         const gridRef = ref(db, 'pixelGrid/30x30');
         const statsRef = ref(db, 'stats/totalPixels');
+        const cooldownRef = ref(db, 'settings/cooldownSeconds');
         
         function buildGrid() {
             gridContainer.innerHTML = '';
@@ -250,6 +249,11 @@
         }
         
         async function handlePixelClick(e, index) {
+            if (cooldownSeconds === null) {
+                statusMessage.textContent = '⏳ ждём загрузки кулдауна...';
+                return;
+            }
+            
             const now = Date.now();
             if (now < nextPlaceAllowed) {
                 const waitSec = Math.ceil((nextPlaceAllowed - now) / 1000);
@@ -263,20 +267,17 @@
             updateTimerDisplay();
             statusMessage.textContent = '🎨 Ставим твой пиксель в историю...';
             
-            // Оптимистичное обновление UI
             const oldColor = gridData[index];
             gridData[index] = color;
             updatePixelUI(index, color);
             
             try {
-                // Обновляем сетку
                 await set(gridRef, {
                     pixels: gridData,
                     lastUpdated: serverTimestamp(),
                     lastUpdatedBy: userId
                 });
                 
-                // Увеличиваем счётчик пикселей (транзакция для надёжности)
                 await runTransaction(statsRef, (current) => {
                     return (current || 0) + 1;
                 });
@@ -285,7 +286,6 @@
             } catch (error) {
                 console.error('Ошибка записи:', error);
                 statusMessage.textContent = '❌ не получилось поставить пиксель.';
-                // Откат UI при ошибке
                 gridData[index] = oldColor;
                 updatePixelUI(index, oldColor);
             }
@@ -329,7 +329,6 @@
                     }
                     isInitialLoad = false;
                 } else {
-                    // Если данных нет, инициализируем белым
                     if (isInitialLoad) {
                         const defaultPixels = new Array(SIZE*SIZE).fill(DEFAULT_COLOR);
                         set(gridRef, { 
@@ -337,7 +336,6 @@
                             lastUpdated: serverTimestamp(), 
                             lastUpdatedBy: 'init' 
                         });
-                        // Инициализируем счётчик если его нет
                         set(statsRef, 0);
                     }
                 }
@@ -346,7 +344,6 @@
                 statusMessage.textContent = '⚠️ чел, сервер тебя не видит, чекни инет';
             });
             
-            // Подписка на счётчик пикселей
             onValue(statsRef, (snapshot) => {
                 const count = snapshot.val() || 0;
                 totalPixelsSpan.textContent = count;
@@ -356,6 +353,13 @@
         window.addEventListener('load', () => {
             buildGrid();
             subscribeToGrid();
+            
+            onValue(cooldownRef, (snapshot) => {
+                const val = snapshot.val();
+                if (val !== null && typeof val === 'number' && val > 0) {
+                    cooldownSeconds = val;
+                }
+            });
             
             colorPicker.addEventListener('input', (e) => {
                 selectedColor = e.target.value;
